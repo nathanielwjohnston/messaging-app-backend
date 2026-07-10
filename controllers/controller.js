@@ -35,3 +35,11 @@ export async function logout(req, res, next) {
                 return res.json({ message: "success" });
         });
 }
+
+export async function createChat() {}
+export async function getChat() {}
+export async function getUsers() {}
+export async function getProfile() {}
+export async function updateProfile() {}
+export async function getUserChats() {}
+export async function sendMessage() {}

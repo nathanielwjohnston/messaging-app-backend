@@ -95,3 +95,6 @@ describe("Authentication", () => {
                 await prisma.user.deleteMany({});
         });
 });
+
+describe("Chats", () => {});
+describe("Users", () => {});

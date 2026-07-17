@@ -43,8 +43,8 @@ router.get("/users", isAuthenticated, controller.getUsers);
 router.get("/users/:id/profile", isAuthenticated, controller.getProfile);
 router.put("/users/:id/profile", isAuthenticated, controller.updateProfile);
 
-router.get("/users/:id/chats", isAuthenticated, controller.getUserChats);
+router.get("/users/:userid/chats", isAuthenticated, controller.getUserChats);
 
-router.post("chats/:id/messages", isAuthenticated, controller.sendMessage);
+router.post("/chats/:chatid/messages", isAuthenticated, controller.sendMessage);
 
 export default router;

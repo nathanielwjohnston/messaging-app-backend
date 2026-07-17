@@ -11,10 +11,8 @@ const verifyCallback = async (username, password, done) => {
                 if (!user) return done(null, false);
                 const isValid = await validatePassword(password, user.hash);
                 if (isValid) {
-                        console.log("valid");
                         return done(null, user);
                 } else {
-                        console.log("invalid");
                         return done(null, false);
                 }
         } catch (error) {

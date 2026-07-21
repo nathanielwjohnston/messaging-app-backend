@@ -16,85 +16,85 @@ import { createApp } from "../app.js";
 
 const app = createApp();
 
-// describe("Authentication", () => {
-//         beforeAll(async () => {
-//                 await prisma.user.deleteMany({});
-//         });
+describe("Authentication", () => {
+        beforeAll(async () => {
+                await prisma.user.deleteMany({});
+        });
 
-//         let agent;
+        let agent;
 
-//         beforeEach(() => {
-//                 agent = request.agent(app);
-//         });
+        beforeEach(() => {
+                agent = request.agent(app);
+        });
 
-//         it("registers a user", async () => {
-//                 const response = await request(app)
-//                         .post("/register")
-//                         .send({ username: "test-user", password: "Password" });
+        it("registers a user", async () => {
+                const response = await request(app)
+                        .post("/register")
+                        .send({ username: "test-user", password: "Password" });
 
-//                 expect(response.headers["content-type"]).toMatch(/json/);
-//                 expect(response.status).toEqual(200);
-//                 expect(response.body.message).toEqual("success");
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.status).toEqual(200);
+                expect(response.body.message).toEqual("success");
 
-//                 const user = await prisma.user.findUnique({
-//                         where: { username: "test-user" },
-//                 });
+                const user = await prisma.user.findUnique({
+                        where: { username: "test-user" },
+                });
 
-//                 expect(user).toBeDefined;
-//         });
-//         it("logs a user in", async () => {
-//                 const response = await request(app).post("/login").send({
-//                         username: "test-user",
-//                         password: "Password",
-//                 });
+                expect(user).toBeDefined;
+        });
+        it("logs a user in", async () => {
+                const response = await request(app).post("/login").send({
+                        username: "test-user",
+                        password: "Password",
+                });
 
-//                 expect(response.headers["content-type"]).toMatch(/json/);
-//                 expect(response.status).toEqual(200);
-//                 expect(response.body.message).toEqual("success");
-//         });
-//         it("logs a user out", async () => {
-//                 // Log user in and saves to session
-//                 await agent.post("/login").send({
-//                         username: "test-user",
-//                         password: "Password",
-//                 });
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.status).toEqual(200);
+                expect(response.body.message).toEqual("success");
+        });
+        it("logs a user out", async () => {
+                // Log user in and saves to session
+                await agent.post("/login").send({
+                        username: "test-user",
+                        password: "Password",
+                });
 
-//                 const response = await agent.get("/logout");
+                const response = await agent.get("/logout");
 
-//                 expect(response.headers["content-type"]).toMatch(/json/);
-//                 expect(response.status).toEqual(200);
-//                 expect(response.body.message).toEqual("success");
-//         });
-//         it("rejects log in attempt when logged in", async () => {
-//                 // Log user in and saves to session
-//                 await agent.post("/login").send({
-//                         username: "test-user",
-//                         password: "Password",
-//                 });
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.status).toEqual(200);
+                expect(response.body.message).toEqual("success");
+        });
+        it("rejects log in attempt when logged in", async () => {
+                // Log user in and saves to session
+                await agent.post("/login").send({
+                        username: "test-user",
+                        password: "Password",
+                });
 
-//                 // Second attempt when logged in
-//                 const response = await agent.post("/login").send({
-//                         username: "test-user",
-//                         password: "Password",
-//                 });
+                // Second attempt when logged in
+                const response = await agent.post("/login").send({
+                        username: "test-user",
+                        password: "Password",
+                });
 
-//                 expect(response.headers["content-type"]).toMatch(/json/);
-//                 expect(response.status).toEqual(409);
-//                 expect(response.body.error).toEqual("Already logged in");
-//         });
-//         it("rejects log in attempt on incorrect credentials", async () => {
-//                 const response = await request(app).post("/login").send({
-//                         username: "test-user",
-//                         password: "IncorrectPassword",
-//                 });
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.status).toEqual(409);
+                expect(response.body.error).toEqual("Already logged in");
+        });
+        it("rejects log in attempt on incorrect credentials", async () => {
+                const response = await request(app).post("/login").send({
+                        username: "test-user",
+                        password: "IncorrectPassword",
+                });
 
-//                 expect(response.status).toEqual(401);
-//         });
+                expect(response.status).toEqual(401);
+        });
 
-//         afterAll(async () => {
-//                 await prisma.user.deleteMany({});
-//         });
-// });
+        afterAll(async () => {
+                await prisma.user.deleteMany({});
+        });
+});
 
 describe("Chats", () => {
         // TODO: make every test independent?
@@ -283,4 +283,113 @@ describe("Chats", () => {
                 );
         });
 });
-describe("Users", () => {});
+describe("Users", () => {
+        beforeAll(async () => {
+                await prisma.message.deleteMany({});
+                await prisma.user.deleteMany({});
+                await prisma.chat.deleteMany({});
+
+                await request(app)
+                        .post("/register")
+                        .send({ username: "test-user1", password: "Password" });
+
+                await request(app)
+                        .post("/register")
+                        .send({ username: "test-user2", password: "Password" });
+        });
+
+        let agent;
+
+        beforeEach(async () => {
+                agent = request.agent(app);
+                await agent.post("/login").send({
+                        username: "test-user1",
+                        password: "Password",
+                });
+        });
+
+        it("gets a list of users", async () => {
+                const response = await agent.get("/users");
+
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.status).toEqual(200);
+
+                // Should not include current user
+                expect(response.body).toMatchObject([
+                        { username: "test-user2" },
+                ]);
+        });
+        it("gets a user's profile", async () => {
+                const user = await prisma.user.findUnique({
+                        where: { username: "test-user2" },
+                });
+
+                const profile = await prisma.profile.update({
+                        where: { id: user.id },
+                        data: {
+                                bio: "This is my new bio",
+                                age: 44,
+                        },
+                });
+
+                const response = await agent.get(`/users/${user.id}/profile`);
+
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.status).toEqual(200);
+
+                expect(response.body).toMatchObject(profile);
+        });
+        it("rejects getting a profile for a non-existent user", async () => {
+                const response = await agent.get("/users/123456/profile");
+
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.status).toEqual(404);
+
+                expect(response.body.message).toEqual(
+                        "This user does not exist",
+                );
+        });
+        it("lets a user update their profile", async () => {
+                const user = await prisma.user.findUnique({
+                        where: { username: "test-user1" },
+                });
+
+                const newBio = "This is an updated bio";
+                const newAge = 33;
+
+                const response = await agent
+                        .put(`/users/${user.id}/profile`)
+                        .send({
+                                bio: newBio,
+                                age: newAge,
+                        });
+
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.status).toEqual(200);
+
+                const updatedProfile = await prisma.profile.findUnique({
+                        where: { id: user.id },
+                });
+
+                expect(updatedProfile.bio).toEqual(newBio);
+                expect(updatedProfile.age).toEqual(newAge);
+        });
+        // TODO: test uploading a file
+        it("rejects a user updating another user's profile", async () => {
+                const user = await prisma.user.findUnique({
+                        where: { username: "test-user2" },
+                });
+
+                const response = await agent
+                        .put(`/users/${user.id}/profile`)
+                        .send({
+                                bio: "This is an illegal bio update",
+                                age: 90,
+                        });
+
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.status).toEqual(403);
+
+                expect(response.body.message).toEqual("Not your profile");
+        });
+});

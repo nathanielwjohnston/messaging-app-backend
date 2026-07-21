@@ -23,12 +23,10 @@ export async function register(req, res, next) {
 
         return res.json({ message: "success" });
 }
-
 export async function login(req, res) {
         // TODO: verification
         return res.json({ message: "success" });
 }
-
 export async function logout(req, res, next) {
         req.logout((err) => {
                 if (err) return next(err);
@@ -111,9 +109,76 @@ export async function getChat(req, res, next) {
                 return next(error);
         }
 }
-export async function getUsers(req, res, next) {}
-export async function getProfile(req, res, next) {}
-export async function updateProfile(req, res, next) {}
+
+export async function getUsers(req, res, next) {
+        const currentUserId = req.user.id;
+
+        try {
+                const user = await prisma.user.findUnique({
+                        where: {
+                                id: currentUserId,
+                        },
+                });
+
+                const users = await prisma.user.findMany({
+                        where: { NOT: { username: user.username } },
+                });
+
+                return res.json(users);
+        } catch (error) {
+                console.error(error);
+                return next(error);
+        }
+}
+export async function getProfile(req, res, next) {
+        const { userid } = req.params;
+
+        try {
+                const profile = await prisma.profile.findUnique({
+                        where: {
+                                id: userid,
+                        },
+                });
+
+                if (!profile) {
+                        return res
+                                .status(404)
+                                .json({ message: "This user does not exist" });
+                }
+
+                return res.json(profile);
+        } catch (error) {
+                console.error(error);
+                return next(error);
+        }
+}
+export async function updateProfile(req, res, next) {
+        const { userid } = req.params;
+
+        const { bio, age } = req.body;
+
+        const currentUserId = req.user.id;
+
+        if (currentUserId !== userid) {
+                return res.status(403).json({ message: "Not your profile" });
+        }
+
+        try {
+                const profile = await prisma.profile.update({
+                        where: { id: userid },
+                        data: {
+                                bio,
+                                age,
+                        },
+                });
+
+                return res.json({ profile });
+        } catch (error) {
+                console.error(error);
+                return next(error);
+        }
+}
+
 export async function getUserChats(req, res, next) {
         const { userid } = req.params;
 

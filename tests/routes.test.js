@@ -374,7 +374,6 @@ describe("Users", () => {
                 expect(updatedProfile.bio).toEqual(newBio);
                 expect(updatedProfile.age).toEqual(newAge);
         });
-        // TODO: test uploading a file
         it("rejects a user updating another user's profile", async () => {
                 const user = await prisma.user.findUnique({
                         where: { username: "test-user2" },
@@ -391,5 +390,25 @@ describe("Users", () => {
                 expect(response.status).toEqual(403);
 
                 expect(response.body.message).toEqual("Not your profile");
+        });
+        it("lets a user update their avatar", async () => {
+                const user = await prisma.user.findUnique({
+                        where: { username: "test-user1" },
+                });
+
+                const response = await agent
+                        .put(`/users/${user.id}/profile`)
+                        .attach("avatar", "./tests/assets/avatar.png");
+
+                console.log("test2");
+
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.status).toEqual(200);
+
+                const updatedProfile = await prisma.profile.findUnique({
+                        where: { id: user.id },
+                });
+
+                expect(updatedProfile.avatarUrl).toBeDefined();
         });
 });

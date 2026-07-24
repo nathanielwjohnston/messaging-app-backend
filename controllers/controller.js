@@ -1,6 +1,8 @@
 import { prisma } from "../lib/prisma.js";
 import { generateHash } from "../lib/passwordUtils.js";
 
+import { v2 as cloudinary } from "cloudinary";
+
 export async function register(req, res, next) {
         // TODO: password confirm and validation
         const { username, password } = req.body;
@@ -152,23 +154,48 @@ export async function getProfile(req, res, next) {
                 return next(error);
         }
 }
-export async function updateProfile(req, res, next) {
-        const { userid } = req.params;
 
+async function uploadImage(file, userId) {
+        const base64 = Buffer.from(file.buffer).toString("base64");
+        let dataURI = "data:" + file.mimetype + ";base64," + base64;
+        const uploadResult = await cloudinary.uploader.upload(dataURI, {
+                resource_type: "auto",
+                public_id: userId,
+                overwrite: true,
+        });
+
+        // versioned url
+        const url = uploadResult.secure_url;
+
+        return url;
+}
+
+export async function updateProfile(req, res, next) {
+        const file = req.file;
+        const { userid } = req.params;
         const { bio, age } = req.body;
 
         const currentUserId = req.user.id;
+
+        console.log(currentUserId, userid);
 
         if (currentUserId !== userid) {
                 return res.status(403).json({ message: "Not your profile" });
         }
 
+        const fields = {
+                bio,
+                age,
+        };
+
         try {
+                if (file) {
+                        fields.avatarUrl = await uploadImage(file, userid);
+                }
                 const profile = await prisma.profile.update({
                         where: { id: userid },
                         data: {
-                                bio,
-                                age,
+                                ...fields,
                         },
                 });
 

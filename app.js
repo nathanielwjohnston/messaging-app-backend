@@ -5,6 +5,7 @@ import { prisma } from "./lib/prisma.js";
 import { PrismaSessionStore } from "@quixo3/prisma-session-store";
 import "./config/passport.js";
 import router from "./routers/router.js";
+import { v2 as cloudinary } from "cloudinary";
 
 export function createApp() {
         const app = express();
@@ -34,6 +35,12 @@ export function createApp() {
 
         app.use(passport.initialize());
         app.use(passport.session());
+
+        cloudinary.config({
+                cloud_name: process.env.CLOUD_NAME,
+                api_key: process.env.CLOUDINARY_API_KEY,
+                api_secret: process.env.CLOUDINARY_API_SECRET,
+        });
 
         app.use("/", router);
 

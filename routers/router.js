@@ -2,7 +2,15 @@ import { Router } from "express";
 import * as controller from "../controllers/controller.js";
 import passport from "passport";
 
+import multer from "multer";
+
 const router = Router();
+
+const storage = new multer.memoryStorage();
+const upload = multer({
+        storage,
+        limits: { fileSize: 10000000 },
+});
 
 const isNotAuthenticated = (req, res, next) => {
         if (!req.isAuthenticated()) {
@@ -41,7 +49,24 @@ router.get("/chats/:id", isAuthenticated, controller.getChat);
 
 router.get("/users", isAuthenticated, controller.getUsers);
 router.get("/users/:userid/profile", isAuthenticated, controller.getProfile);
-router.put("/users/:userid/profile", isAuthenticated, controller.updateProfile);
+router.put(
+        "/users/:userid/profile",
+        (req, res, next) => {
+                console.log("before auth");
+                next();
+        },
+        isAuthenticated,
+        (req, res, next) => {
+                console.log("before multer");
+                next();
+        },
+        upload.single("avatar"),
+        (req, res, next) => {
+                console.log("after multer");
+                next();
+        },
+        controller.updateProfile,
+);
 
 router.get("/users/:userid/chats", isAuthenticated, controller.getUserChats);
 

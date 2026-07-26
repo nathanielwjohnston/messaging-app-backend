@@ -28,9 +28,11 @@ describe("Authentication", () => {
         });
 
         it("registers a user", async () => {
-                const response = await request(app)
-                        .post("/register")
-                        .send({ username: "test-user", password: "Password" });
+                const response = await request(app).post("/register").send({
+                        username: "test-user",
+                        password: "Password",
+                        passwordConfirm: "Password",
+                });
 
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.status).toEqual(200);
@@ -104,13 +106,17 @@ describe("Chats", () => {
                 await prisma.user.deleteMany({});
                 await prisma.chat.deleteMany({});
 
-                await request(app)
-                        .post("/register")
-                        .send({ username: "test-user1", password: "Password" });
+                await request(app).post("/register").send({
+                        username: "test-user1",
+                        password: "Password",
+                        passwordConfirm: "Password",
+                });
 
-                await request(app)
-                        .post("/register")
-                        .send({ username: "test-user2", password: "Password" });
+                await request(app).post("/register").send({
+                        username: "test-user2",
+                        password: "Password",
+                        passwordConfirm: "Password",
+                });
         });
 
         let agent;
@@ -160,9 +166,11 @@ describe("Chats", () => {
         });
 
         it("fetches a chat", async () => {
-                await request(app)
-                        .post("/register")
-                        .send({ username: "test-user3", password: "Password" });
+                await request(app).post("/register").send({
+                        username: "test-user3",
+                        password: "Password",
+                        passwordConfirm: "Password",
+                });
 
                 const user = await prisma.user.findUnique({
                         where: { username: "test-user3" },
@@ -289,13 +297,17 @@ describe("Users", () => {
                 await prisma.user.deleteMany({});
                 await prisma.chat.deleteMany({});
 
-                await request(app)
-                        .post("/register")
-                        .send({ username: "test-user1", password: "Password" });
+                await request(app).post("/register").send({
+                        username: "test-user1",
+                        password: "Password",
+                        passwordConfirm: "Password",
+                });
 
-                await request(app)
-                        .post("/register")
-                        .send({ username: "test-user2", password: "Password" });
+                await request(app).post("/register").send({
+                        username: "test-user2",
+                        password: "Password",
+                        passwordConfirm: "Password",
+                });
         });
 
         let agent;
@@ -400,8 +412,6 @@ describe("Users", () => {
                         .put(`/users/${user.id}/profile`)
                         .attach("avatar", "./tests/assets/avatar.png");
 
-                console.log("test2");
-
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.status).toEqual(200);
 
@@ -410,5 +420,17 @@ describe("Users", () => {
                 });
 
                 expect(updatedProfile.avatarUrl).toBeDefined();
+        });
+        it("rejects an avatar that is not an image", async () => {
+                const user = await prisma.user.findUnique({
+                        where: { username: "test-user1" },
+                });
+
+                const response = await agent
+                        .put(`/users/${user.id}/profile`)
+                        .attach("avatar", "./tests/assets/avatar.mp3");
+
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.status).toEqual(415);
         });
 });

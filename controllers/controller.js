@@ -173,11 +173,9 @@ async function uploadImage(file, userId) {
 export async function updateProfile(req, res, next) {
         const file = req.file;
         const { userid } = req.params;
-        const { bio, age } = req.body;
+        const { bio, age } = req.body || {};
 
         const currentUserId = req.user.id;
-
-        console.log(currentUserId, userid);
 
         if (currentUserId !== userid) {
                 return res.status(403).json({ message: "Not your profile" });

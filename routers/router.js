@@ -3,6 +3,10 @@ import * as controller from "../controllers/controller.js";
 import passport from "passport";
 
 import multer from "multer";
+import { fromBuffer } from "file-type";
+
+import * as validator from "../validators/validator.js";
+import { validationResult } from "express-validator";
 
 const router = Router();
 
@@ -32,11 +36,67 @@ const isAuthenticated = (req, res, next) => {
         });
 };
 
-router.post("/register", isNotAuthenticated, controller.register);
+const validateFileType = async (req, res, next) => {
+        if (!req.file) {
+                return next();
+        }
+        const buffer = req.file.buffer;
+        const type = await fromBuffer(buffer);
+        const allowedTypes = ["image/jpeg", "image/png"];
+
+        if (!type || !allowedTypes.includes(type.mime)) {
+                return res
+                        .status(415)
+                        .json({ message: "The file can only be an image" });
+        } else {
+                next();
+        }
+};
+
+router.post(
+        "/register",
+        isNotAuthenticated,
+        validator.validateRegistration,
+        (req, res, next) => {
+                const { username, password, passwordConfirm } = req.body;
+
+                const result = validationResult(req);
+                if (!result.isEmpty()) {
+                        const errors = result.array();
+                        console.log(errors);
+
+                        return res.status(400).send({
+                                errors,
+                                username,
+                                password,
+                                passwordConfirm,
+                        });
+                }
+                next();
+        },
+        controller.register,
+);
 
 router.post(
         "/login",
         isNotAuthenticated,
+        validator.validateLogin,
+        (req, res, next) => {
+                const { username, password } = req.body;
+
+                const result = validationResult(req);
+                if (!result.isEmpty()) {
+                        const errors = result.array();
+                        console.log(errors);
+
+                        return res.status(400).send({
+                                errors,
+                                username,
+                                password,
+                        });
+                }
+                next();
+        },
         passport.authenticate("local"),
         controller.login,
 );
@@ -51,25 +111,53 @@ router.get("/users", isAuthenticated, controller.getUsers);
 router.get("/users/:userid/profile", isAuthenticated, controller.getProfile);
 router.put(
         "/users/:userid/profile",
-        (req, res, next) => {
-                console.log("before auth");
-                next();
-        },
         isAuthenticated,
+        validator.validateProfileUpdate,
         (req, res, next) => {
-                console.log("before multer");
+                const { bio, age } = req.body || {};
+
+                const result = validationResult(req);
+                if (!result.isEmpty()) {
+                        const errors = result.array();
+                        console.log(errors);
+
+                        return res.status(400).send({
+                                errors,
+                                bio,
+                                age,
+                        });
+                }
                 next();
         },
         upload.single("avatar"),
-        (req, res, next) => {
-                console.log("after multer");
-                next();
-        },
+        validateFileType,
         controller.updateProfile,
 );
 
 router.get("/users/:userid/chats", isAuthenticated, controller.getUserChats);
 
-router.post("/chats/:chatid/messages", isAuthenticated, controller.sendMessage);
+router.post(
+        "/chats/:chatid/messages",
+        isAuthenticated,
+        validator.validateMessageSending,
+        (req, res, next) => {
+                const { content } = req.body;
+
+                const result = validationResult(req);
+                if (!result.isEmpty()) {
+                        const errors = result.array();
+
+                        console.log(errors);
+
+                        return res.status(400).send({
+                                errors,
+                                content,
+                                message: "No message content provided",
+                        });
+                }
+                next();
+        },
+        controller.sendMessage,
+);
 
 export default router;

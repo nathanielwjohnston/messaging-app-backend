@@ -3,12 +3,20 @@ import session from "express-session";
 import passport from "passport";
 import { prisma } from "./lib/prisma.js";
 import { PrismaSessionStore } from "@quixo3/prisma-session-store";
+import cors from "cors";
 import "./config/passport.js";
 import router from "./routers/router.js";
 import { v2 as cloudinary } from "cloudinary";
 
 export function createApp() {
         const app = express();
+
+        app.use(
+                cors({
+                        origin: "http://localhost:5173",
+                        credentials: true,
+                }),
+        );
 
         app.use(express.json());
         app.use(express.urlencoded({ extended: true }));
@@ -44,7 +52,10 @@ export function createApp() {
 
         app.use("/", router);
 
-        app.use((err, req, res) => {
+        app.use((err, req, res, next) => {
+                if (res.headersSent) {
+                        return next(err);
+                }
                 console.error(err);
                 res.status(500).json(err);
         });

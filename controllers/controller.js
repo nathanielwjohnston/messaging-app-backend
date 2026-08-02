@@ -4,7 +4,6 @@ import { generateHash } from "../lib/passwordUtils.js";
 import { v2 as cloudinary } from "cloudinary";
 
 export async function register(req, res, next) {
-        // TODO: password confirm and validation
         const { username, password } = req.body;
 
         const hash = await generateHash(password);
@@ -26,7 +25,6 @@ export async function register(req, res, next) {
         return res.json({ message: "success" });
 }
 export async function login(req, res) {
-        // TODO: verification
         return res.json({ message: "success" });
 }
 export async function logout(req, res, next) {

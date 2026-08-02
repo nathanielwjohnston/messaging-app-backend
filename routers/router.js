@@ -3,7 +3,7 @@ import * as controller from "../controllers/controller.js";
 import passport from "passport";
 
 import multer from "multer";
-import { fromBuffer } from "file-type";
+import * as ft from "file-type";
 
 import * as validator from "../validators/validator.js";
 import { validationResult } from "express-validator";
@@ -41,7 +41,7 @@ const validateFileType = async (req, res, next) => {
                 return next();
         }
         const buffer = req.file.buffer;
-        const type = await fromBuffer(buffer);
+        const type = await ft.fromBuffer(buffer);
         const allowedTypes = ["image/jpeg", "image/png"];
 
         if (!type || !allowedTypes.includes(type.mime)) {
@@ -53,11 +53,16 @@ const validateFileType = async (req, res, next) => {
         }
 };
 
+router.get("/me", isAuthenticated, (req, res) => {
+        res.json({ message: "success" });
+});
+
 router.post(
         "/register",
         isNotAuthenticated,
         validator.validateRegistration,
         (req, res, next) => {
+                console.log(req.body);
                 const { username, password, passwordConfirm } = req.body;
 
                 const result = validationResult(req);

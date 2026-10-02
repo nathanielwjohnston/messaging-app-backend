@@ -8,15 +8,15 @@ export async function register(req, res, next) {
 
         const hash = await generateHash(password);
 
-        // TODO: have generic avatar image
-
         try {
                 await prisma.user.create({
                         data: {
                                 username,
                                 hash,
                                 profile: {
-                                        create: {},
+                                        create: {
+                                                avatarUrl: "https://res.cloudinary.com/da6cjcmtt/image/upload/v1785094610/cms278o7400084053i508u0tl.png",
+                                        },
                                 },
                         },
                 });
@@ -171,8 +171,6 @@ export async function getProfile(req, res, next) {
                         age: profile.profile.age,
                         avatarUrl: profile.profile.avatarUrl,
                 };
-
-                console.log(profile);
 
                 return res.json(profile);
         } catch (error) {

@@ -99,8 +99,6 @@ describe("Authentication", () => {
 });
 
 describe("Chats", () => {
-        // TODO: make every test independent?
-
         beforeAll(async () => {
                 await prisma.message.deleteMany({});
                 await prisma.user.deleteMany({});

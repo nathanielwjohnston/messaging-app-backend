@@ -61,7 +61,7 @@ describe("Authentication", () => {
                         password: "Password",
                 });
 
-                const response = await agent.get("/logout");
+                const response = await agent.post("/logout");
 
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.status).toEqual(200);
@@ -344,12 +344,19 @@ describe("Users", () => {
                         },
                 });
 
+                const updatedProfile = {
+                        username: "test-user2",
+                        bio: profile.bio,
+                        age: profile.age,
+                        avatarUrl: profile.avatarUrl,
+                };
+
                 const response = await agent.get(`/users/${user.id}/profile`);
 
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.status).toEqual(200);
 
-                expect(response.body).toMatchObject(profile);
+                expect(response.body).toMatchObject(updatedProfile);
         });
         it("rejects getting a profile for a non-existent user", async () => {
                 const response = await agent.get("/users/123456/profile");

@@ -40,8 +40,9 @@ const validateFileType = async (req, res, next) => {
         if (!req.file) {
                 return next();
         }
+
         const buffer = req.file.buffer;
-        const type = await ft.fromBuffer(buffer);
+        const type = await ft.default.fromBuffer(buffer);
         const allowedTypes = ["image/jpeg", "image/png"];
 
         if (!type || !allowedTypes.includes(type.mime)) {
@@ -54,7 +55,7 @@ const validateFileType = async (req, res, next) => {
 };
 
 router.get("/me", isAuthenticated, (req, res) => {
-        res.json({ message: "success" });
+        res.json({ message: "success", userId: req.user.id });
 });
 
 router.post(
@@ -62,13 +63,11 @@ router.post(
         isNotAuthenticated,
         validator.validateRegistration,
         (req, res, next) => {
-                console.log(req.body);
                 const { username, password, passwordConfirm } = req.body;
 
                 const result = validationResult(req);
                 if (!result.isEmpty()) {
                         const errors = result.array();
-                        console.log(errors);
 
                         return res.status(400).send({
                                 errors,
@@ -92,7 +91,6 @@ router.post(
                 const result = validationResult(req);
                 if (!result.isEmpty()) {
                         const errors = result.array();
-                        console.log(errors);
 
                         return res.status(400).send({
                                 errors,
@@ -106,7 +104,7 @@ router.post(
         controller.login,
 );
 
-router.get("/logout", controller.logout);
+router.post("/logout", controller.logout);
 
 // Create chat
 router.post("/chats", isAuthenticated, controller.createChat);
@@ -124,7 +122,6 @@ router.put(
                 const result = validationResult(req);
                 if (!result.isEmpty()) {
                         const errors = result.array();
-                        console.log(errors);
 
                         return res.status(400).send({
                                 errors,
@@ -151,8 +148,6 @@ router.post(
                 const result = validationResult(req);
                 if (!result.isEmpty()) {
                         const errors = result.array();
-
-                        console.log(errors);
 
                         return res.status(400).send({
                                 errors,

@@ -8,6 +8,8 @@ export async function register(req, res, next) {
 
         const hash = await generateHash(password);
 
+        // TODO: have generic avatar image
+
         try {
                 await prisma.user.create({
                         data: {
@@ -54,7 +56,10 @@ export async function createChat(req, res, next) {
                                         },
                                 },
                         },
-                        include: { users: true, messages: true },
+                        include: {
+                                users: { select: { id: true, username: true } },
+                                messages: true,
+                        },
                 });
 
                 if (chat) {
@@ -79,7 +84,10 @@ export async function createChat(req, res, next) {
                                         ],
                                 },
                         },
-                        include: { users: true, messages: true },
+                        include: {
+                                users: { select: { id: true, username: true } },
+                                messages: true,
+                        },
                 });
 
                 return res.json(chat);
@@ -96,7 +104,10 @@ export async function getChat(req, res, next) {
                         where: {
                                 id,
                         },
-                        include: { users: true, messages: true },
+                        include: {
+                                users: { select: { id: true, username: true } },
+                                messages: { include: { user: true } },
+                        },
                 });
 
                 if (chat) {
@@ -122,6 +133,11 @@ export async function getUsers(req, res, next) {
 
                 const users = await prisma.user.findMany({
                         where: { NOT: { username: user.username } },
+                        select: {
+                                id: true,
+                                username: true,
+                                profile: { select: { avatarUrl: true } },
+                        },
                 });
 
                 return res.json(users);
@@ -134,9 +150,12 @@ export async function getProfile(req, res, next) {
         const { userid } = req.params;
 
         try {
-                const profile = await prisma.profile.findUnique({
+                let profile = await prisma.user.findUnique({
                         where: {
                                 id: userid,
+                        },
+                        include: {
+                                profile: true,
                         },
                 });
 
@@ -145,6 +164,15 @@ export async function getProfile(req, res, next) {
                                 .status(404)
                                 .json({ message: "This user does not exist" });
                 }
+
+                profile = {
+                        username: profile.username,
+                        bio: profile.profile.bio,
+                        age: profile.profile.age,
+                        avatarUrl: profile.profile.avatarUrl,
+                };
+
+                console.log(profile);
 
                 return res.json(profile);
         } catch (error) {
@@ -171,7 +199,7 @@ async function uploadImage(file, userId) {
 export async function updateProfile(req, res, next) {
         const file = req.file;
         const { userid } = req.params;
-        const { bio, age } = req.body || {};
+        const { username, bio, age } = req.body || {};
 
         const currentUserId = req.user.id;
 
@@ -181,7 +209,7 @@ export async function updateProfile(req, res, next) {
 
         const fields = {
                 bio,
-                age,
+                age: parseInt(age),
         };
 
         try {
@@ -195,7 +223,21 @@ export async function updateProfile(req, res, next) {
                         },
                 });
 
-                return res.json({ profile });
+                const user = await prisma.user.update({
+                        where: { id: userid },
+                        data: {
+                                username,
+                        },
+                });
+
+                const updatedProfile = {
+                        username: user.username,
+                        bio: profile.bio,
+                        age: profile.age,
+                        avatarUrl: profile.avatarUrl,
+                };
+
+                return res.json(updatedProfile);
         } catch (error) {
                 console.error(error);
                 return next(error);
@@ -215,8 +257,14 @@ export async function getUserChats(req, res, next) {
                                 },
                         },
                         include: {
-                                users: true,
-                                messages: true,
+                                messages: { include: { user: true } },
+                                users: {
+                                        select: {
+                                                id: true,
+                                                username: true,
+                                                profile: true,
+                                        },
+                                },
                         },
                 });
 
@@ -267,6 +315,7 @@ export async function sendMessage(req, res, next) {
                                 userId: currentUserId,
                                 chatId: chatid,
                         },
+                        include: { user: true },
                 });
 
                 return res.json(message);
